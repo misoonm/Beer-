@@ -1,0 +1,2296 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سيستار - إدارة الآبار</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2c7873;
+            --primary-dark: #1e524d;
+            --secondary: #ffb300;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            direction: rtl;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* الشريط الجانبي */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--box-shadow);
+            z-index: 100;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        .logo {
+            text-align: center;
+            padding: 25px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .logo p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .nav-links {
+            list-style: none;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .nav-links li {
+            padding: 0;
+        }
+        
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 16px 30px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+        
+        .nav-links a i {
+            margin-left: 12px;
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: white;
+        }
+        
+        .nav-links a:hover::before, .nav-links a.active::before {
+            right: 0;
+        }
+        
+        .nav-links a.active {
+            border-right: 4px solid var(--secondary);
+        }
+        
+        /* المحتوى الرئيسي */
+        .main-content {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 18px 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border-left: 5px solid var(--secondary);
+        }
+        
+        .header h2 {
+            font-size: 1.8rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header h2 i {
+            color: var(--secondary);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 22px;
+            margin-bottom: 35px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-top: 4px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.1;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .stat-card i {
+            font-size: 2.8rem;
+            float: left;
+            margin-left: 15px;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+        
+        .stat-card .title {
+            font-size: 1.05rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -1px;
+        }
+        
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+            font-size: 1.35rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-container h3 i {
+            color: var(--secondary);
+        }
+        
+        .chart-wrapper {
+            height: 300px;
+            position: relative;
+        }
+        
+        /* الجداول والنماذج */
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 35px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--secondary);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.05rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        thead {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        th, td {
+            padding: 16px 20px;
+            text-align: right;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        th {
+            font-weight: 600;
+        }
+        
+        tbody tr {
+            transition: background 0.2s;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-buttons button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* النماذج */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            transform: translateY(0);
+            animation: slideUp 0.4s ease;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: rgba(255,255,255,0.8);
+            transition: all 0.2s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 22px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 1.05rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            transition: border-color 0.3s;
+            background: #f8fafc;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 120, 115, 0.1);
+            background: white;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 18px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #e9ecef;
+            text-align: left;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        /* رسائل التنبيه */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* متجاوب */
+        @media (max-width: 992px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .nav-links {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .nav-links li {
+                width: auto;
+            }
+            
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .modal-content {
+                width: 95%;
+            }
+        }
+        
+        /* الرسوم المتحركة */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* شريط التحميل */
+        .progress-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        /* إضافات جديدة */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-table {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+        
+        .empty-table i {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 15px;
+            color: #ced4da;
+        }
+        
+        .reference-link {
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .reference-link:hover {
+            color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- الشريط الجانبي -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-water"></i> سيستار</h1>
+                <p>نظام إدارة الآبار والمشتركين</p>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="#" class="active" data-section="dashboard"><i class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="#" data-section="subscribers"><i class="fas fa-users"></i> المشتركين</a></li>
+                <li><a href="#" data-section="buyers"><i class="fas fa-user-tag"></i> المشترين</a></li>
+                <li><a href="#" data-section="balance"><i class="fas fa-wallet"></i> الرصيد</a></li>
+                <li><a href="#" data-section="debts"><i class="fas fa-file-invoice-dollar"></i> الديون</a></li>
+                <li><a href="#" data-section="purchases"><i class="fas fa-shopping-cart"></i> المشتروات</a></li>
+            </ul>
+        </div>
+        
+        <!-- المحتوى الرئيسي -->
+        <div class="main-content">
+            <!-- لوحة التحكم -->
+            <div class="section" id="dashboard">
+                <div class="header">
+                    <h2><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="refreshBtn"><i class="fas fa-sync-alt"></i> تحديث البيانات</button>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success" id="success-alert">
+                    <i class="fas fa-check-circle"></i> تم حفظ البيانات بنجاح!
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="title">عدد المشتركين</div>
+                        <div class="value" id="subscribersCount">0</div>
+                        <div class="progress-bar">
+                            <div class="progress" id="subscribersProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-user-tag"></i>
+                        <div class="title">عدد المشترين</div>
+                        <div class="value" id="buyersCount">0</div>
+                        <div class="progress-bar">
+                            <div class="progress" id="buyersProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-wallet"></i>
+                        <div class="title">إجمالي الرصيد</div>
+                        <div class="value" id="totalBalance">0 ر.س</div>
+                        <div class="progress-bar">
+                            <div class="progress" id="balanceProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <div class="title">إجمالي الديون</div>
+                        <div class="value" id="totalDebts">0 ر.س</div>
+                        <div class="progress-bar">
+                            <div class="progress" id="debtsProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-line"></i> إحصائيات المشتركين</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="subscribersChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-pie"></i> توزيع الديون</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="debtsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- قسم المشتركين -->
+            <div class="section" id="subscribers" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-users"></i> إدارة المشتركين</h3>
+                    <button class="btn btn-primary" id="addSubscriberBtn">
+                        <i class="fas fa-plus"></i> إضافة مشترك
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="subscribersTable">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الساعات/الأسبوع</th>
+                                <th>المأخوذ</th>
+                                <th>المتبقي</th>
+                                <th>المدفوع</th>
+                                <th>المتبقي</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscribersTableBody">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم المشترين -->
+            <div class="section" id="buyers" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-user-tag"></i> إدارة المشترين</h3>
+                    <button class="btn btn-primary" id="addBuyerBtn">
+                        <i class="fas fa-plus"></i> إضافة مشتري
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="buyersTable">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>عدد الساعات</th>
+                                <th>تاريخ الاستلام</th>
+                                <th>المدفوع</th>
+                                <th>المتبقي</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="buyersTableBody">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم الرصيد -->
+            <div class="section" id="balance" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-wallet"></i> إدارة الرصيد</h3>
+                    <div>
+                        <span class="stat-card" style="display: inline-block; padding: 10px 20px; background: #e8f4f3; color: var(--primary);">
+                            إجمالي الرصيد: <strong id="balanceTotal">0 ر.س</strong>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="balanceTable">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>النوع</th>
+                                <th>المبلغ المدفوع</th>
+                                <th>تاريخ الدفع</th>
+                                <th>المصدر</th>
+                            </tr>
+                        </thead>
+                        <tbody id="balanceTableBody">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم الديون -->
+            <div class="section" id="debts" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-file-invoice-dollar"></i> إدارة الديون</h3>
+                    <div>
+                        <span class="stat-card" style="display: inline-block; padding: 10px 20px; background: #fbecec; color: var(--danger);">
+                            إجمالي الديون: <strong id="debtsTotal">0 ر.س</strong>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="debtsTable">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>النوع</th>
+                                <th>المبلغ المتبقي</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>المصدر</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="debtsTableBody">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم المشتروات -->
+            <div class="section" id="purchases" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-shopping-cart"></i> إدارة المشتروات</h3>
+                    <button class="btn btn-primary" id="addPurchaseBtn">
+                        <i class="fas fa-plus"></i> إضافة مشتروات
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="purchasesTable">
+                        <thead>
+                            <tr>
+                                <th>الصنف</th>
+                                <th>النوع</th>
+                                <th>تاريخ الشراء</th>
+                                <th>المبلغ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchasesTableBody">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- نموذج إضافة/تعديل مشترك -->
+    <div class="modal" id="subscriberModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="subscriberModalTitle"><i class="fas fa-user-plus"></i> إضافة مشترك جديد</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="subscriberId">
+                <div class="form-group">
+                    <label for="subscriberName"><i class="fas fa-user"></i> اسم المشترك</label>
+                    <input type="text" id="subscriberName" class="form-control" placeholder="أدخل الاسم الكامل">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hoursPerWeek"><i class="fas fa-clock"></i> عدد الساعات في الأسبوع</label>
+                        <input type="number" id="hoursPerWeek" class="form-control" min="1" value="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="takenHours"><i class="fas fa-hourglass-half"></i> المأخوذ من الساعات</label>
+                        <input type="number" id="takenHours" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paidAmount"><i class="fas fa-money-bill-wave"></i> المدفوع من الرسوم</label>
+                        <input type="number" id="paidAmount" class="form-control" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="remainingAmount"><i class="fas fa-money-bill-alt"></i> المتبقي من الرسوم</label>
+                        <input type="number" id="remainingAmount" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning close-modal"><i class="fas fa-times"></i> إلغاء</button>
+                <button class="btn btn-primary" id="saveSubscriber"><i class="fas fa-save"></i> حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة/تعديل مشتري -->
+    <div class="modal" id="buyerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="buyerModalTitle"><i class="fas fa-user-tag"></i> إضافة مشتري جديد</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="buyerId">
+                <div class="form-group">
+                    <label for="buyerName"><i class="fas fa-user"></i> اسم المشتري</label>
+                    <input type="text" id="buyerName" class="form-control" placeholder="أدخل الاسم الكامل">
+                </div>
+                
+                <div class="form-group">
+                    <label for="hoursCount"><i class="fas fa-clock"></i> عدد الساعات</label>
+                    <input type="number" id="hoursCount" class="form-control" min="1" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryDate"><i class="fas fa-calendar-day"></i> تاريخ الاستلام</label>
+                    <input type="datetime-local" id="deliveryDate" class="form-control">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="buyerPaid"><i class="fas fa-money-bill-wave"></i> المدفوع من الرسوم</label>
+                        <input type="number" id="buyerPaid" class="form-control" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="buyerRemaining"><i class="fas fa-money-bill-alt"></i> المتبقي من الرسوم</label>
+                        <input type="number" id="buyerRemaining" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning close-modal"><i class="fas fa-times"></i> إلغاء</button>
+                <button class="btn btn-primary" id="saveBuyer"><i class="fas fa-save"></i> حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة/تعديل مشتروات -->
+    <div class="modal" id="purchaseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="purchaseModalTitle"><i class="fas fa-cart-plus"></i> إضافة مشتروات جديدة</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="purchaseId">
+                <div class="form-group">
+                    <label for="itemName"><i class="fas fa-box"></i> اسم الصنف</label>
+                    <input type="text" id="itemName" class="form-control" placeholder="أدخل اسم الصنف">
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemType"><i class="fas fa-tag"></i> نوع الصنف</label>
+                    <select id="itemType" class="form-control">
+                        <option value="مواد">مواد</option>
+                        <option value="صيانة">صيانة</option>
+                        <option value="أدوات">أدوات</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="purchaseDate"><i class="fas fa-calendar"></i> تاريخ الشراء</label>
+                    <input type="date" id="purchaseDate" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="purchaseAmount"><i class="fas fa-money-bill"></i> المبلغ</label>
+                    <input type="number" id="purchaseAmount" class="form-control" min="0" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning close-modal"><i class="fas fa-times"></i> إلغاء</button>
+                <button class="btn btn-primary" id="savePurchase"><i class="fas fa-save"></i> حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج تسديد دين -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-money-check-alt"></i> تسديد دين</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="debtId">
+                <input type="hidden" id="debtType">
+                <input type="hidden" id="debtName">
+                <div class="form-group">
+                    <label for="debtAmount"><i class="fas fa-money-bill-wave"></i> المبلغ المستحق</label>
+                    <input type="text" id="debtAmount" class="form-control" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="paymentAmount"><i class="fas fa-money-bill-alt"></i> المبلغ المدفوع</label>
+                    <input type="number" id="paymentAmount" class="form-control" min="0" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="paymentDate"><i class="fas fa-calendar"></i> تاريخ التسديد</label>
+                    <input type="date" id="paymentDate" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning close-modal"><i class="fas fa-times"></i> إلغاء</button>
+                <button class="btn btn-success" id="confirmPayment"><i class="fas fa-check"></i> تأكيد التسديد</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // قاعدة البيانات المحلية باستخدام IndexedDB
+        let db;
+        const DB_NAME = 'sistarDB';
+        const DB_VERSION = 1;
+        
+        // تعريف جداول البيانات
+        const DB_STORES = {
+            SUBSCRIBERS: 'subscribers',
+            BUYERS: 'buyers',
+            BALANCE: 'balance',
+            DEBTS: 'debts',
+            PURCHASES: 'purchases'
+        };
+        
+        // تهيئة قاعدة البيانات
+        function initDB() {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onupgradeneeded = function(event) {
+                db = event.target.result;
+                
+                // إنشاء جداول البيانات إذا لم تكن موجودة
+                if (!db.objectStoreNames.contains(DB_STORES.SUBSCRIBERS)) {
+                    const subscribersStore = db.createObjectStore(DB_STORES.SUBSCRIBERS, { keyPath: 'id', autoIncrement: true });
+                    subscribersStore.createIndex('name', 'name', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains(DB_STORES.BUYERS)) {
+                    const buyersStore = db.createObjectStore(DB_STORES.BUYERS, { keyPath: 'id', autoIncrement: true });
+                    buyersStore.createIndex('name', 'name', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains(DB_STORES.BALANCE)) {
+                    const balanceStore = db.createObjectStore(DB_STORES.BALANCE, { keyPath: 'id', autoIncrement: true });
+                    balanceStore.createIndex('referenceId', 'referenceId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains(DB_STORES.DEBTS)) {
+                    const debtsStore = db.createObjectStore(DB_STORES.DEBTS, { keyPath: 'id', autoIncrement: true });
+                    debtsStore.createIndex('referenceId', 'referenceId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains(DB_STORES.PURCHASES)) {
+                    db.createObjectStore(DB_STORES.PURCHASES, { keyPath: 'id', autoIncrement: true });
+                }
+            };
+            
+            request.onsuccess = function(event) {
+                db = event.target.result;
+                console.log('تم تهيئة قاعدة البيانات بنجاح');
+                loadAllData();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء فتح قاعدة البيانات:', event.target.error);
+            };
+        }
+        
+        // وظائف CRUD للمشتركين
+        function addSubscriber(subscriber) {
+            const transaction = db.transaction([DB_STORES.SUBSCRIBERS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.SUBSCRIBERS);
+            const request = store.add(subscriber);
+            
+            request.onsuccess = function(event) {
+                const id = event.target.result;
+                showSuccess('تم إضافة المشترك بنجاح');
+                
+                // إضافة المدفوعات إلى الرصيد
+                if (subscriber.paidAmount > 0) {
+                    addBalanceRecord({
+                        name: subscriber.name,
+                        type: 'مشترك',
+                        amount: subscriber.paidAmount,
+                        date: new Date().toISOString(),
+                        referenceId: id
+                    });
+                }
+                
+                // إضافة المتبقي إلى الديون
+                if (subscriber.remainingAmount > 0) {
+                    addDebtRecord({
+                        name: subscriber.name,
+                        type: 'مشترك',
+                        remainingAmount: subscriber.remainingAmount,
+                        dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+                        referenceId: id
+                    });
+                }
+                
+                loadSubscribers();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء إضافة المشترك:', event.target.error);
+            };
+        }
+        
+        function updateSubscriber(subscriber) {
+            const transaction = db.transaction([DB_STORES.SUBSCRIBERS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.SUBSCRIBERS);
+            const request = store.put(subscriber);
+            
+            request.onsuccess = function() {
+                showSuccess('تم تحديث بيانات المشترك بنجاح');
+                
+                // تحديث المدفوعات في الرصيد
+                updateBalanceRecords(subscriber.id, subscriber.paidAmount, subscriber.name);
+                
+                // تحديث المتبقي في الديون
+                updateDebtRecords(subscriber.id, subscriber.remainingAmount, subscriber.name);
+                
+                loadSubscribers();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء تحديث المشترك:', event.target.error);
+            };
+        }
+        
+        function deleteSubscriber(id) {
+            const transaction = db.transaction([DB_STORES.SUBSCRIBERS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.SUBSCRIBERS);
+            const request = store.delete(id);
+            
+            request.onsuccess = function() {
+                showSuccess('تم حذف المشترك بنجاح');
+                
+                // حذف السجلات المرتبطة من الرصيد والديون
+                deleteRecordsByReference(DB_STORES.BALANCE, id);
+                deleteRecordsByReference(DB_STORES.DEBTS, id);
+                
+                loadSubscribers();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء حذف المشترك:', event.target.error);
+            };
+        }
+        
+        function getSubscriber(id, callback) {
+            const transaction = db.transaction([DB_STORES.SUBSCRIBERS], 'readonly');
+            const store = transaction.objectStore(DB_STORES.SUBSCRIBERS);
+            const request = store.get(id);
+            
+            request.onsuccess = function(event) {
+                callback(event.target.result);
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء جلب بيانات المشترك:', event.target.error);
+            };
+        }
+        
+        // وظائف CRUD للمشترين
+        function addBuyer(buyer) {
+            const transaction = db.transaction([DB_STORES.BUYERS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.BUYERS);
+            const request = store.add(buyer);
+            
+            request.onsuccess = function(event) {
+                const id = event.target.result;
+                showSuccess('تم إضافة المشتري بنجاح');
+                
+                // إضافة المدفوعات إلى الرصيد
+                if (buyer.buyerPaid > 0) {
+                    addBalanceRecord({
+                        name: buyer.name,
+                        type: 'مشتري',
+                        amount: buyer.buyerPaid,
+                        date: new Date().toISOString(),
+                        referenceId: id
+                    });
+                }
+                
+                // إضافة المتبقي إلى الديون
+                if (buyer.buyerRemaining > 0) {
+                    addDebtRecord({
+                        name: buyer.name,
+                        type: 'مشتري',
+                        remainingAmount: buyer.buyerRemaining,
+                        dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+                        referenceId: id
+                    });
+                }
+                
+                loadBuyers();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء إضافة المشتري:', event.target.error);
+            };
+        }
+        
+        function updateBuyer(buyer) {
+            const transaction = db.transaction([DB_STORES.BUYERS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.BUYERS);
+            const request = store.put(buyer);
+            
+            request.onsuccess = function() {
+                showSuccess('تم تحديث بيانات المشتري بنجاح');
+                
+                // تحديث المدفوعات في الرصيد
+                updateBalanceRecords(buyer.id, buyer.buyerPaid, buyer.name);
+                
+                // تحديث المتبقي في الديون
+                updateDebtRecords(buyer.id, buyer.buyerRemaining, buyer.name);
+                
+                loadBuyers();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء تحديث المشتري:', event.target.error);
+            };
+        }
+        
+        function deleteBuyer(id) {
+            const transaction = db.transaction([DB_STORES.BUYERS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.BUYERS);
+            const request = store.delete(id);
+            
+            request.onsuccess = function() {
+                showSuccess('تم حذف المشتري بنجاح');
+                
+                // حذف السجلات المرتبطة من الرصيد والديون
+                deleteRecordsByReference(DB_STORES.BALANCE, id);
+                deleteRecordsByReference(DB_STORES.DEBTS, id);
+                
+                loadBuyers();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء حذف المشتري:', event.target.error);
+            };
+        }
+        
+        function getBuyer(id, callback) {
+            const transaction = db.transaction([DB_STORES.BUYERS], 'readonly');
+            const store = transaction.objectStore(DB_STORES.BUYERS);
+            const request = store.get(id);
+            
+            request.onsuccess = function(event) {
+                callback(event.target.result);
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء جلب بيانات المشتري:', event.target.error);
+            };
+        }
+        
+        // وظائف CRUD للمشتروات
+        function addPurchase(purchase) {
+            const transaction = db.transaction([DB_STORES.PURCHASES], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.PURCHASES);
+            const request = store.add(purchase);
+            
+            request.onsuccess = function() {
+                showSuccess('تم إضافة المشتروات بنجاح');
+                loadPurchases();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء إضافة المشتروات:', event.target.error);
+            };
+        }
+        
+        function updatePurchase(purchase) {
+            const transaction = db.transaction([DB_STORES.PURCHASES], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.PURCHASES);
+            const request = store.put(purchase);
+            
+            request.onsuccess = function() {
+                showSuccess('تم تحديث بيانات المشتروات بنجاح');
+                loadPurchases();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء تحديث المشتروات:', event.target.error);
+            };
+        }
+        
+        function deletePurchase(id) {
+            const transaction = db.transaction([DB_STORES.PURCHASES], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.PURCHASES);
+            const request = store.delete(id);
+            
+            request.onsuccess = function() {
+                showSuccess('تم حذف المشتروات بنجاح');
+                loadPurchases();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء حذف المشتروات:', event.target.error);
+            };
+        }
+        
+        function getPurchase(id, callback) {
+            const transaction = db.transaction([DB_STORES.PURCHASES], 'readonly');
+            const store = transaction.objectStore(DB_STORES.PURCHASES);
+            const request = store.get(id);
+            
+            request.onsuccess = function(event) {
+                callback(event.target.result);
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء جلب بيانات المشتروات:', event.target.error);
+            };
+        }
+        
+        // وظائف لإدارة الديون والرصيد
+        function addBalanceRecord(record) {
+            const transaction = db.transaction([DB_STORES.BALANCE], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.BALANCE);
+            const request = store.add(record);
+            
+            request.onsuccess = function() {
+                loadBalance();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء إضافة سجل الرصيد:', event.target.error);
+            };
+        }
+        
+        function addDebtRecord(record) {
+            const transaction = db.transaction([DB_STORES.DEBTS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.DEBTS);
+            const request = store.add(record);
+            
+            request.onsuccess = function() {
+                loadDebts();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء إضافة سجل الديون:', event.target.error);
+            };
+        }
+        
+        function deleteDebtRecord(id) {
+            const transaction = db.transaction([DB_STORES.DEBTS], 'readwrite');
+            const store = transaction.objectStore(DB_STORES.DEBTS);
+            const request = store.delete(id);
+            
+            request.onsuccess = function() {
+                loadDebts();
+                loadDashboardStats();
+            };
+            
+            request.onerror = function(event) {
+                console.error('حدث خطأ أثناء حذف سجل الديون:', event.target.error);
+            };
+        }
+        
+        function updateBalanceRecords(referenceId, amount, name) {
+            // حذف السجلات القديمة
+            deleteRecordsByReference(DB_STORES.BALANCE, referenceId);
+            
+            // إضافة سجل جديد إذا كان هناك مبلغ
+            if (amount > 0) {
+                addBalanceRecord({
+                    name: name,
+                    type: referenceId.startsWith('sub') ? 'مشترك' : 'مشتري',
+                    amount: amount,
+                    date: new Date().toISOString(),
+                    referenceId: referenceId
+                });
+            }
+        }
+        
+        function updateDebtRecords(referenceId, amount, name) {
+            // حذف السجلات القديمة
+            deleteRecordsByReference(DB_STORES.DEBTS, referenceId);
+            
+            // إضافة سجل جديد إذا كان هناك مبلغ
+            if (amount > 0) {
+                addDebtRecord({
+                    name: name,
+                    type: referenceId.startsWith('sub') ? 'مشترك' : 'مشتري',
+                    remainingAmount: amount,
+                    dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+                    referenceId: referenceId
+                });
+            }
+        }
+        
+        function deleteRecordsByReference(storeName, referenceId) {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const index = store.index('referenceId');
+            
+            const request = index.openCursor(IDBKeyRange.only(referenceId));
+            
+            request.onsuccess = function(event) {
+                const cursor = event.target.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+        }
+        
+        // وظائف لتحميل البيانات وعرضها
+        function loadAllData() {
+            loadSubscribers();
+            loadBuyers();
+            loadBalance();
+            loadDebts();
+            loadPurchases();
+            loadDashboardStats();
+        }
+        
+        function loadSubscribers() {
+            const transaction = db.transaction([DB_STORES.SUBSCRIBERS], 'readonly');
+            const store = transaction.objectStore(DB_STORES.SUBSCRIBERS);
+            const request = store.getAll();
+            
+            request.onsuccess = function(event) {
+                const subscribers = event.target.result;
+                const tbody = document.getElementById('subscribersTableBody');
+                tbody.innerHTML = '';
+                
+                if (subscribers.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="empty-table">
+                                <i class="fas fa-user-slash"></i>
+                                لا يوجد مشتركون مسجلون
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                subscribers.forEach(subscriber => {
+                    const remainingHours = (subscriber.hoursPerWeek * 12) - subscriber.takenHours;
+                    const remainingAmount = subscriber.remainingAmount;
+                    const status = remainingAmount > 0 ? 'مدين' : 'مسدد';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${subscriber.name}</td>
+                        <td>${subscriber.hoursPerWeek}</td>
+                        <td>${subscriber.takenHours}</td>
+                        <td>${remainingHours}</td>
+                        <td>${subscriber.paidAmount} ر.س</td>
+                        <td>${remainingAmount} ر.س</td>
+                        <td><span class="badge ${status === 'مسدد' ? 'badge-success' : 'badge-danger'}">${status}</span></td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary edit-subscriber" data-id="${subscriber.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger delete-subscriber" data-id="${subscriber.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // إضافة مستمعي الأحداث لأزرار التعديل والحذف
+                document.querySelectorAll('.edit-subscriber').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        openEditSubscriberModal(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-subscriber').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        if (confirm('هل أنت متأكد من حذف هذا المشترك؟')) {
+                            deleteSubscriber(id);
+                        }
+                    });
+                });
+            };
+        }
+        
+        function loadBuyers() {
+            const transaction = db.transaction([DB_STORES.BUYERS], 'readonly');
+            const store = transaction.objectStore(DB_STORES.BUYERS);
+            const request = store.getAll();
+            
+            request.onsuccess = function(event) {
+                const buyers = event.target.result;
+                const tbody = document.getElementById('buyersTableBody');
+                tbody.innerHTML = '';
+                
+                if (buyers.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="empty-table">
+                                <i class="fas fa-user-times"></i>
+                                لا يوجد مشترون مسجلون
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                buyers.forEach(buyer => {
+                    const remainingAmount = buyer.buyerRemaining;
+                    const status = remainingAmount > 0 ? 'مدين' : 'مسدد';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${buyer.name}</td>
+                        <td>${buyer.hoursCount}</td>
+                        <td>${formatDateTime(buyer.deliveryDate)}</td>
+                        <td>${buyer.buyerPaid} ر.س</td>
+                        <td>${remainingAmount} ر.س</td>
+                        <td><span class="badge ${status === 'مسدد' ? 'badge-success' : 'badge-danger'}">${status}</span></td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary edit-buyer" data-id="${buyer.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger delete-buyer" data-id="${buyer.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // إضافة مستمعي الأحداث لأزرار التعديل والحذف
+                document.querySelectorAll('.edit-buyer').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        openEditBuyerModal(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-buyer').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        if (confirm('هل أنت متأكد من حذف هذا المشتري؟')) {
+                            deleteBuyer(id);
+                        }
+                    });
+                });
+            };
+        }
+        
+        function loadBalance() {
+            const transaction = db.transaction([DB_STORES.BALANCE], 'readonly');
+            const store = transaction.objectStore(DB_STORES.BALANCE);
+            const request = store.getAll();
+            
+            request.onsuccess = function(event) {
+                const balanceRecords = event.target.result;
+                const tbody = document.getElementById('balanceTableBody');
+                tbody.innerHTML = '';
+                
+                if (balanceRecords.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="empty-table">
+                                <i class="fas fa-wallet"></i>
+                                لا توجد سجلات رصيد
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                balanceRecords.forEach(record => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.name}</td>
+                        <td>${record.type}</td>
+                        <td>${record.amount} ر.س</td>
+                        <td>${formatDate(record.date)}</td>
+                        <td>
+                            <span class="reference-link" data-reference="${record.referenceId}">
+                                ${record.type === 'مشترك' ? 'مشترك' : 'مشتري'}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // إضافة مستمعي الأحداث للروابط المرجعية
+                document.querySelectorAll('.reference-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        const referenceId = this.getAttribute('data-reference');
+                        if (referenceId.startsWith('sub')) {
+                            // التنقل إلى قسم المشتركين
+                            document.querySelectorAll('.nav-links a').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            document.querySelector('[data-section="subscribers"]').classList.add('active');
+                            
+                            document.querySelectorAll('.section').forEach(section => {
+                                section.style.display = 'none';
+                            });
+                            document.getElementById('subscribers').style.display = 'block';
+                        } else {
+                            // التنقل إلى قسم المشترين
+                            document.querySelectorAll('.nav-links a').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            document.querySelector('[data-section="buyers"]').classList.add('active');
+                            
+                            document.querySelectorAll('.section').forEach(section => {
+                                section.style.display = 'none';
+                            });
+                            document.getElementById('buyers').style.display = 'block';
+                        }
+                    });
+                });
+            };
+        }
+        
+        function loadDebts() {
+            const transaction = db.transaction([DB_STORES.DEBTS], 'readonly');
+            const store = transaction.objectStore(DB_STORES.DEBTS);
+            const request = store.getAll();
+            
+            request.onsuccess = function(event) {
+                const debts = event.target.result;
+                const tbody = document.getElementById('debtsTableBody');
+                tbody.innerHTML = '';
+                
+                if (debts.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-table">
+                                <i class="fas fa-file-invoice"></i>
+                                لا توجد ديون مسجلة
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                debts.forEach(debt => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${debt.name}</td>
+                        <td>${debt.type}</td>
+                        <td>${debt.remainingAmount} ر.س</td>
+                        <td>${formatDate(debt.dueDate)}</td>
+                        <td>
+                            <span class="reference-link" data-reference="${debt.referenceId}">
+                                ${debt.type === 'مشترك' ? 'مشترك' : 'مشتري'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-success pay-debt" data-id="${debt.id}" data-type="${debt.type}" data-name="${debt.name}" data-amount="${debt.remainingAmount}">
+                                <i class="fas fa-check"></i> تسديد
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // إضافة مستمعي الأحداث لأزرار التسديد
+                document.querySelectorAll('.pay-debt').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        const type = this.getAttribute('data-type');
+                        const name = this.getAttribute('data-name');
+                        const amount = parseFloat(this.getAttribute('data-amount'));
+                        
+                        openPaymentModal(id, type, name, amount);
+                    });
+                });
+                
+                // إضافة مستمعي الأحداث للروابط المرجعية
+                document.querySelectorAll('.reference-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        const referenceId = this.getAttribute('data-reference');
+                        if (referenceId.startsWith('sub')) {
+                            // التنقل إلى قسم المشتركين
+                            document.querySelectorAll('.nav-links a').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            document.querySelector('[data-section="subscribers"]').classList.add('active');
+                            
+                            document.querySelectorAll('.section').forEach(section => {
+                                section.style.display = 'none';
+                            });
+                            document.getElementById('subscribers').style.display = 'block';
+                        } else {
+                            // التنقل إلى قسم المشترين
+                            document.querySelectorAll('.nav-links a').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            document.querySelector('[data-section="buyers"]').classList.add('active');
+                            
+                            document.querySelectorAll('.section').forEach(section => {
+                                section.style.display = 'none';
+                            });
+                            document.getElementById('buyers').style.display = 'block';
+                        }
+                    });
+                });
+            };
+        }
+        
+        function loadPurchases() {
+            const transaction = db.transaction([DB_STORES.PURCHASES], 'readonly');
+            const store = transaction.objectStore(DB_STORES.PURCHASES);
+            const request = store.getAll();
+            
+            request.onsuccess = function(event) {
+                const purchases = event.target.result;
+                const tbody = document.getElementById('purchasesTableBody');
+                tbody.innerHTML = '';
+                
+                if (purchases.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="empty-table">
+                                <i class="fas fa-shopping-cart"></i>
+                                لا توجد مشتروات مسجلة
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                purchases.forEach(purchase => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${purchase.itemName}</td>
+                        <td>${purchase.itemType}</td>
+                        <td>${formatDate(purchase.purchaseDate)}</td>
+                        <td>${purchase.purchaseAmount} ر.س</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary edit-purchase" data-id="${purchase.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger delete-purchase" data-id="${purchase.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // إضافة مستمعي الأحداث لأزرار التعديل والحذف
+                document.querySelectorAll('.edit-purchase').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        openEditPurchaseModal(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-purchase').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        if (confirm('هل أنت متأكد من حذف هذه المشتروات؟')) {
+                            deletePurchase(id);
+                        }
+                    });
+                });
+            };
+        }
+        
+        function loadDashboardStats() {
+            // إحصائيات المشتركين
+            const subscribersTransaction = db.transaction([DB_STORES.SUBSCRIBERS], 'readonly');
+            const subscribersStore = subscribersTransaction.objectStore(DB_STORES.SUBSCRIBERS);
+            const subscribersRequest = subscribersStore.count();
+            
+            subscribersRequest.onsuccess = function() {
+                const subscribersCount = subscribersRequest.result;
+                document.getElementById('subscribersCount').textContent = subscribersCount;
+                document.getElementById('subscribersProgress').style.width = `${Math.min(subscribersCount * 5, 100)}%`;
+            };
+            
+            // إحصائيات المشترين
+            const buyersTransaction = db.transaction([DB_STORES.BUYERS], 'readonly');
+            const buyersStore = buyersTransaction.objectStore(DB_STORES.BUYERS);
+            const buyersRequest = buyersStore.count();
+            
+            buyersRequest.onsuccess = function() {
+                const buyersCount = buyersRequest.result;
+                document.getElementById('buyersCount').textContent = buyersCount;
+                document.getElementById('buyersProgress').style.width = `${Math.min(buyersCount * 10, 100)}%`;
+            };
+            
+            // إحصائيات الرصيد
+            const balanceTransaction = db.transaction([DB_STORES.BALANCE], 'readonly');
+            const balanceStore = balanceTransaction.objectStore(DB_STORES.BALANCE);
+            const balanceRequest = balanceStore.getAll();
+            
+            balanceRequest.onsuccess = function() {
+                const balanceRecords = balanceRequest.result;
+                let totalBalance = 0;
+                
+                balanceRecords.forEach(record => {
+                    totalBalance += record.amount;
+                });
+                
+                document.getElementById('totalBalance').textContent = `${totalBalance.toLocaleString()} ر.س`;
+                document.getElementById('balanceTotal').textContent = `${totalBalance.toLocaleString()} ر.س`;
+                document.getElementById('balanceProgress').style.width = `${Math.min(totalBalance / 500, 100)}%`;
+            };
+            
+            // إحصائيات الديون
+            const debtsTransaction = db.transaction([DB_STORES.DEBTS], 'readonly');
+            const debtsStore = debtsTransaction.objectStore(DB_STORES.DEBTS);
+            const debtsRequest = debtsStore.getAll();
+            
+            debtsRequest.onsuccess = function() {
+                const debts = debtsRequest.result;
+                let totalDebts = 0;
+                
+                debts.forEach(debt => {
+                    totalDebts += debt.remainingAmount;
+                });
+                
+                document.getElementById('totalDebts').textContent = `${totalDebts.toLocaleString()} ر.س`;
+                document.getElementById('debtsTotal').textContent = `${totalDebts.toLocaleString()} ر.س`;
+                document.getElementById('debtsProgress').style.width = `${Math.min(totalDebts / 200, 100)}%`;
+            };
+        }
+        
+        // وظائف عرض النماذج
+        function openSubscriberModal() {
+            document.getElementById('subscriberModalTitle').innerHTML = '<i class="fas fa-user-plus"></i> إضافة مشترك جديد';
+            document.getElementById('subscriberId').value = '';
+            document.getElementById('subscriberName').value = '';
+            document.getElementById('hoursPerWeek').value = '10';
+            document.getElementById('takenHours').value = '0';
+            document.getElementById('paidAmount').value = '0';
+            document.getElementById('remainingAmount').value = '0';
+            document.getElementById('subscriberModal').style.display = 'flex';
+        }
+        
+        function openEditSubscriberModal(id) {
+            getSubscriber(id, function(subscriber) {
+                if (subscriber) {
+                    document.getElementById('subscriberModalTitle').innerHTML = '<i class="fas fa-user-edit"></i> تعديل بيانات المشترك';
+                    document.getElementById('subscriberId').value = subscriber.id;
+                    document.getElementById('subscriberName').value = subscriber.name;
+                    document.getElementById('hoursPerWeek').value = subscriber.hoursPerWeek;
+                    document.getElementById('takenHours').value = subscriber.takenHours;
+                    document.getElementById('paidAmount').value = subscriber.paidAmount;
+                    document.getElementById('remainingAmount').value = subscriber.remainingAmount;
+                    document.getElementById('subscriberModal').style.display = 'flex';
+                }
+            });
+        }
+        
+        function openBuyerModal() {
+            document.getElementById('buyerModalTitle').innerHTML = '<i class="fas fa-user-tag"></i> إضافة مشتري جديد';
+            document.getElementById('buyerId').value = '';
+            document.getElementById('buyerName').value = '';
+            document.getElementById('hoursCount').value = '5';
+            document.getElementById('deliveryDate').value = getTomorrowDateTime();
+            document.getElementById('buyerPaid').value = '0';
+            document.getElementById('buyerRemaining').value = '0';
+            document.getElementById('buyerModal').style.display = 'flex';
+        }
+        
+        function openEditBuyerModal(id) {
+            getBuyer(id, function(buyer) {
+                if (buyer) {
+                    document.getElementById('buyerModalTitle').innerHTML = '<i class="fas fa-user-edit"></i> تعديل بيانات المشتري';
+                    document.getElementById('buyerId').value = buyer.id;
+                    document.getElementById('buyerName').value = buyer.name;
+                    document.getElementById('hoursCount').value = buyer.hoursCount;
+                    document.getElementById('deliveryDate').value = formatDateTimeForInput(buyer.deliveryDate);
+                    document.getElementById('buyerPaid').value = buyer.buyerPaid;
+                    document.getElementById('buyerRemaining').value = buyer.buyerRemaining;
+                    document.getElementById('buyerModal').style.display = 'flex';
+                }
+            });
+        }
+        
+        function openPurchaseModal() {
+            document.getElementById('purchaseModalTitle').innerHTML = '<i class="fas fa-cart-plus"></i> إضافة مشتروات جديدة';
+            document.getElementById('purchaseId').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemType').value = 'مواد';
+            document.getElementById('purchaseDate').valueAsDate = new Date();
+            document.getElementById('purchaseAmount').value = '0';
+            document.getElementById('purchaseModal').style.display = 'flex';
+        }
+        
+        function openEditPurchaseModal(id) {
+            getPurchase(id, function(purchase) {
+                if (purchase) {
+                    document.getElementById('purchaseModalTitle').innerHTML = '<i class="fas fa-edit"></i> تعديل بيانات المشتروات';
+                    document.getElementById('purchaseId').value = purchase.id;
+                    document.getElementById('itemName').value = purchase.itemName;
+                    document.getElementById('itemType').value = purchase.itemType;
+                    document.getElementById('purchaseDate').value = formatDateForInput(purchase.purchaseDate);
+                    document.getElementById('purchaseAmount').value = purchase.purchaseAmount;
+                    document.getElementById('purchaseModal').style.display = 'flex';
+                }
+            });
+        }
+        
+        function openPaymentModal(id, type, name, amount) {
+            document.getElementById('debtId').value = id;
+            document.getElementById('debtType').value = type;
+            document.getElementById('debtName').value = name;
+            document.getElementById('debtAmount').value = `${amount.toLocaleString()} ر.س`;
+            document.getElementById('paymentAmount').value = amount;
+            document.getElementById('paymentDate').valueAsDate = new Date();
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+        
+        // وظائف مساعدة
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ar-EG');
+        }
+        
+        function formatDateTime(dateTimeString) {
+            const date = new Date(dateTimeString);
+            return date.toLocaleString('ar-EG', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function formatDateTimeForInput(dateTimeString) {
+            const date = new Date(dateTimeString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        function formatDateForInput(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function getTomorrowDateTime() {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(10, 0, 0, 0);
+            
+            const year = tomorrow.getFullYear();
+            const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const day = String(tomorrow.getDate()).padStart(2, '0');
+            const hours = String(tomorrow.getHours()).padStart(2, '0');
+            const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        function showSuccess(message) {
+            const successAlert = document.getElementById('success-alert');
+            successAlert.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            successAlert.style.display = 'block';
+            
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 3000);
+        }
+        
+        // المخططات البيانية
+        function initCharts() {
+            // مخطط المشتركين
+            const subscribersCtx = document.getElementById('subscribersChart').getContext('2d');
+            const subscribersChart = new Chart(subscribersCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو'],
+                    datasets: [{
+                        label: 'عدد المشتركين',
+                        data: [35, 38, 40, 42, 41, 42, 45],
+                        backgroundColor: 'rgba(44, 120, 115, 0.7)',
+                        borderColor: 'rgba(44, 120, 115, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // مخطط الديون
+            const debtsCtx = document.getElementById('debtsChart').getContext('2d');
+            const debtsChart = new Chart(debtsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['المشتركين', 'المشترين'],
+                    datasets: [{
+                        data: [5200, 3000],
+                        backgroundColor: [
+                            'rgba(220, 53, 69, 0.7)',
+                            'rgba(255, 179, 0, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(220, 53, 69, 1)',
+                            'rgba(255, 179, 0, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+            
+            return { subscribersChart, debtsChart };
+        }
+        
+        // تهيئة الأحداث
+        function initEvents() {
+            // إدارة التنقل بين الأقسام
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // إزالة النشاط من جميع الروابط
+                    document.querySelectorAll('.nav-links a').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // إضافة النشاط للرابط الحالي
+                    this.classList.add('active');
+                    
+                    // إخفاء جميع الأقسام
+                    document.querySelectorAll('.section').forEach(section => {
+                        section.style.display = 'none';
+                    });
+                    
+                    // إظهار القسم المطلوب
+                    const sectionId = this.getAttribute('data-section');
+                    document.getElementById(sectionId).style.display = 'block';
+                });
+            });
+            
+            // إدارة النماذج المنبثقة
+            const subscriberModal = document.getElementById('subscriberModal');
+            const buyerModal = document.getElementById('buyerModal');
+            const purchaseModal = document.getElementById('purchaseModal');
+            const paymentModal = document.getElementById('paymentModal');
+            
+            const addSubscriberBtn = document.getElementById('addSubscriberBtn');
+            const addBuyerBtn = document.getElementById('addBuyerBtn');
+            const addPurchaseBtn = document.getElementById('addPurchaseBtn');
+            
+            const closeModalBtns = document.querySelectorAll('.close-modal');
+            
+            addSubscriberBtn.addEventListener('click', openSubscriberModal);
+            addBuyerBtn.addEventListener('click', openBuyerModal);
+            addPurchaseBtn.addEventListener('click', openPurchaseModal);
+            
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    subscriberModal.style.display = 'none';
+                    buyerModal.style.display = 'none';
+                    purchaseModal.style.display = 'none';
+                    paymentModal.style.display = 'none';
+                });
+            });
+            
+            // إغلاق النافذة المنبثقة عند النقر خارجها
+            window.addEventListener('click', (e) => {
+                if (e.target === subscriberModal) subscriberModal.style.display = 'none';
+                if (e.target === buyerModal) buyerModal.style.display = 'none';
+                if (e.target === purchaseModal) purchaseModal.style.display = 'none';
+                if (e.target === paymentModal) paymentModal.style.display = 'none';
+            });
+            
+            // حفظ المشترك
+            document.getElementById('saveSubscriber').addEventListener('click', () => {
+                const id = document.getElementById('subscriberId').value;
+                const subscriber = {
+                    name: document.getElementById('subscriberName').value,
+                    hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value),
+                    takenHours: parseInt(document.getElementById('takenHours').value),
+                    paidAmount: parseFloat(document.getElementById('paidAmount').value),
+                    remainingAmount: parseFloat(document.getElementById('remainingAmount').value)
+                };
+                
+                if (!subscriber.name) {
+                    alert('يرجى إدخال اسم المشترك');
+                    return;
+                }
+                
+                if (id) {
+                    subscriber.id = parseInt(id);
+                    updateSubscriber(subscriber);
+                } else {
+                    addSubscriber(subscriber);
+                }
+                
+                subscriberModal.style.display = 'none';
+            });
+            
+            // حفظ المشتري
+            document.getElementById('saveBuyer').addEventListener('click', () => {
+                const id = document.getElementById('buyerId').value;
+                const buyer = {
+                    name: document.getElementById('buyerName').value,
+                    hoursCount: parseInt(document.getElementById('hoursCount').value),
+                    deliveryDate: document.getElementById('deliveryDate').value,
+                    buyerPaid: parseFloat(document.getElementById('buyerPaid').value),
+                    buyerRemaining: parseFloat(document.getElementById('buyerRemaining').value)
+                };
+                
+                if (!buyer.name) {
+                    alert('يرجى إدخال اسم المشتري');
+                    return;
+                }
+                
+                if (id) {
+                    buyer.id = parseInt(id);
+                    updateBuyer(buyer);
+                } else {
+                    addBuyer(buyer);
+                }
+                
+                buyerModal.style.display = 'none';
+            });
+            
+            // حفظ المشتروات
+            document.getElementById('savePurchase').addEventListener('click', () => {
+                const id = document.getElementById('purchaseId').value;
+                const purchase = {
+                    itemName: document.getElementById('itemName').value,
+                    itemType: document.getElementById('itemType').value,
+                    purchaseDate: document.getElementById('purchaseDate').value,
+                    purchaseAmount: parseFloat(document.getElementById('purchaseAmount').value)
+                };
+                
+                if (!purchase.itemName) {
+                    alert('يرجى إدخال اسم الصنف');
+                    return;
+                }
+                
+                if (id) {
+                    purchase.id = parseInt(id);
+                    updatePurchase(purchase);
+                } else {
+                    addPurchase(purchase);
+                }
+                
+                purchaseModal.style.display = 'none';
+            });
+            
+            // تأكيد التسديد
+            document.getElementById('confirmPayment').addEventListener('click', () => {
+                const id = parseInt(document.getElementById('debtId').value);
+                const type = document.getElementById('debtType').value;
+                const name = document.getElementById('debtName').value;
+                const amount = parseFloat(document.getElementById('paymentAmount').value);
+                const date = document.getElementById('paymentDate').value;
+                
+                // تسجيل عملية الدفع في الرصيد
+                addBalanceRecord({
+                    name: name,
+                    type: 'تسديد دين',
+                    amount: amount,
+                    date: date
+                });
+                
+                // حذف الدين بعد تسديده
+                deleteDebtRecord(id);
+                
+                showSuccess('تم تسديد الدين بنجاح');
+                paymentModal.style.display = 'none';
+            });
+            
+            // تحديث البيانات
+            document.getElementById('refreshBtn').addEventListener('click', loadAllData);
+            
+            // تعيين التاريخ الحالي في نماذج الشراء
+            document.getElementById('purchaseDate').valueAsDate = new Date();
+        }
+        
+        // تهيئة التطبيق عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            initDB();
+            initCharts();
+            initEvents();
+        });
+    </script>
+</body>
+</html>
