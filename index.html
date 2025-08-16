@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سيستار - إدارة الآبار</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2c7873;
+            --primary-dark: #1e524d;
+            --secondary: #ffb300;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            direction: rtl;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* الشريط الجانبي */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--box-shadow);
+            z-index: 100;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        .logo {
+            text-align: center;
+            padding: 25px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .logo p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .nav-links {
+            list-style: none;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .nav-links li {
+            padding: 0;
+        }
+        
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 16px 30px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+        
+        .nav-links a i {
+            margin-left: 12px;
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: white;
+        }
+        
+        .nav-links a:hover::before, .nav-links a.active::before {
+            right: 0;
+        }
+        
+        .nav-links a.active {
+            border-right: 4px solid var(--secondary);
+        }
+        
+        /* المحتوى الرئيسي */
+        .main-content {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 18px 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border-left: 5px solid var(--secondary);
+        }
+        
+        .header h2 {
+            font-size: 1.8rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header h2 i {
+            color: var(--secondary);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 22px;
+            margin-bottom: 35px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-top: 4px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.1;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .stat-card i {
+            font-size: 2.8rem;
+            float: left;
+            margin-left: 15px;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+        
+        .stat-card .title {
+            font-size: 1.05rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -1px;
+        }
+        
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+            font-size: 1.35rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-container h3 i {
+            color: var(--secondary);
+        }
+        
+        .chart-wrapper {
+            height: 300px;
+            position: relative;
+        }
+        
+        /* الجداول والنماذج */
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 35px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--secondary);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.05rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        thead {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        th, td {
+            padding: 16px 20px;
+            text-align: right;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        th {
+            font-weight: 600;
+        }
+        
+        tbody tr {
+            transition: background 0.2s;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-buttons button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* النماذج */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            transform: translateY(0);
+            animation: slideUp 0.4s ease;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: rgba(255,255,255,0.8);
+            transition: all 0.2s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 22px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 1.05rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            transition: border-color 0.3s;
+            background: #f8fafc;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 120, 115, 0.1);
+            background: white;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 18px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #e9ecef;
+            text-align: left;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        /* رسائل التنبيه */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* متجاوب */
+        @media (max-width: 992px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .nav-links {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .nav-links li {
+                width: auto;
+            }
+            
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .modal-content {
+                width: 95%;
+            }
+        }
+        
+        /* الرسوم المتحركة */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* شريط التحميل */
+        .progress-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- الشريط الجانبي -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-water"></i> سيستار</h1>
+                <p>نظام إدارة الآبار والمشتركين</p>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="#" class="active" data-section="dashboard"><i class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="#" data-section="subscribers"><i class="fas fa-users"></i> المشتركين</a></li>
+                <li><a href="#" data-section="buyers"><i class="fas fa-user-tag"></i> المشترين</a></li>
+                <li><a href="#" data-section="balance"><i class="fas fa-wallet"></i> الرصيد</a></li>
+                <li><a href="#" data-section="debts"><i class="fas fa-file-invoice-dollar"></i> الديون</a></li>
+                <li><a href="#" data-section="purchases"><i class="fas fa-shopping-cart"></i> المشتروات</a></li>
+            </ul>
+        </div>
+        
+        <!-- المحتوى الرئيسي -->
+        <div class="main-content">
+            <!-- لوحة التحكم -->
+            <div class="section" id="dashboard">
+                <div class="header">
+                    <h2><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary"><i class="fas fa-sync-alt"></i> تحديث البيانات</button>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success" id="success-alert">
+                    <i class="fas fa-check-circle"></i> تم حفظ البيانات بنجاح!
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="title">عدد المشتركين</div>
+                        <div class="value">42</div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-user-tag"></i>
+                        <div class="title">عدد المشترين</div>
+                        <div class="value">18</div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 35%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-wallet"></i>
+                        <div class="title">إجمالي الرصيد</div>
+                        <div class="value">27,500 ر.س</div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 65%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <div class="title">إجمالي الديون</div>
+                        <div class="value">8,200 ر.س</div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 30%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-line"></i> إحصائيات المشتركين</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="subscribersChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-pie"></i> توزيع الديون</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="debtsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- قسم المشتركين -->
+            <div class="section" id="subscribers" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-users"></i> إدارة المشتركين</h3>
+                    <button class="btn btn-primary" id="addSubscriberBtn">
+                        <i class="fas fa-plus"></i> إضافة مشترك
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الساعات/الأسبوع</th>
+                                <th>المأخوذ</th>
+                                <th>المتبقي</th>
+                                <th>المدفوع</th>
+                                <th>المتبقي</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>محمد أحمد</td>
+                                <td>10</td>
+                                <td>32</td>
+                                <td>68</td>
+                                <td>5,000 ر.س</td>
+                                <td>1,500 ر.س</td>
+                                <td><span class="badge badge-danger">مدين</span></td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-primary"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>سالم عبدالله</td>
+                                <td>15</td>
+                                <td>45</td>
+                                <td>105</td>
+                                <td>7,500 ر.س</td>
+                                <td>0 ر.س</td>
+                                <td><span class="badge badge-success">مسدد</span></td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-primary"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>فاطمة خالد</td>
+                                <td>8</td>
+                                <td>24</td>
+                                <td>40</td>
+                                <td>4,000 ر.س</td>
+                                <td>800 ر.س</td>
+                                <td><span class="badge badge-danger">مدين</span></td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-primary"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم المشترين -->
+            <div class="section" id="buyers" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-user-tag"></i> إدارة المشترين</h3>
+                    <button class="btn btn-primary" id="addBuyerBtn">
+                        <i class="fas fa-plus"></i> إضافة مشتري
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>عدد الساعات</th>
+                                <th>تاريخ الاستلام</th>
+                                <th>المدفوع</th>
+                                <th>المتبقي</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>علي حسن</td>
+                                <td>20</td>
+                                <td>15/08/2023 10:00 ص</td>
+                                <td>3,000 ر.س</td>
+                                <td>2,000 ر.س</td>
+                                <td><span class="badge badge-danger">مدين</span></td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-primary"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>خالد سعيد</td>
+                                <td>15</td>
+                                <td>20/08/2023 02:00 م</td>
+                                <td>4,500 ر.س</td>
+                                <td>0 ر.س</td>
+                                <td><span class="badge badge-success">مسدد</span></td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-primary"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم الرصيد -->
+            <div class="section" id="balance" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-wallet"></i> إدارة الرصيد</h3>
+                    <div>
+                        <span class="stat-card" style="display: inline-block; padding: 10px 20px; background: #e8f4f3; color: var(--primary);">
+                            إجمالي الرصيد: <strong>27,500 ر.س</strong>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>النوع</th>
+                                <th>المبلغ المدفوع</th>
+                                <th>تاريخ الدفع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>سالم عبدالله</td>
+                                <td>مشترك</td>
+                                <td>7,500 ر.س</td>
+                                <td>10/08/2023</td>
+                            </tr>
+                            <tr>
+                                <td>خالد سعيد</td>
+                                <td>مشتري</td>
+                                <td>4,500 ر.س</td>
+                                <td>12/08/2023</td>
+                            </tr>
+                            <tr>
+                                <td>أحمد محمد</td>
+                                <td>مشترك</td>
+                                <td>6,000 ر.س</td>
+                                <td>05/08/2023</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم الديون -->
+            <div class="section" id="debts" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-file-invoice-dollar"></i> إدارة الديون</h3>
+                    <div>
+                        <span class="stat-card" style="display: inline-block; padding: 10px 20px; background: #fbecec; color: var(--danger);">
+                            إجمالي الديون: <strong>8,200 ر.س</strong>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>النوع</th>
+                                <th>المبلغ المتبقي</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>محمد أحمد</td>
+                                <td>مشترك</td>
+                                <td>1,500 ر.س</td>
+                                <td>25/08/2023</td>
+                                <td>
+                                    <button class="btn btn-success"><i class="fas fa-check"></i> تسديد</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>فاطمة خالد</td>
+                                <td>مشترك</td>
+                                <td>800 ر.س</td>
+                                <td>28/08/2023</td>
+                                <td>
+                                    <button class="btn btn-success"><i class="fas fa-check"></i> تسديد</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>علي حسن</td>
+                                <td>مشتري</td>
+                                <td>2,000 ر.س</td>
+                                <td>30/08/2023</td>
+                                <td>
+                                    <button class="btn btn-success"><i class="fas fa-check"></i> تسديد</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- قسم المشتروات -->
+            <div class="section" id="purchases" style="display:none;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-shopping-cart"></i> إدارة المشتروات</h3>
+                    <button class="btn btn-primary" id="addPurchaseBtn">
+                        <i class="fas fa-plus"></i> إضافة مشتروات
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الصنف</th>
+                                <th>النوع</th>
+                                <th>تاريخ الشراء</th>
+                                <th>المبلغ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>طلمبة مياه</td>
+                                <td>صيانة</td>
+                                <td>10/08/2023</td>
+                                <td>3,500 ر.س</td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-primary"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>أنابيب PVC</td>
+                                <td>مواد</td>
+                                <td>05/08/2023</td>
+                                <td>1,200 ر.س</td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-primary"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- نموذج إضافة مشترك -->
+    <div class="modal" id="subscriberModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-user-plus"></i> إضافة مشترك جديد</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="subscriberName"><i class="fas fa-user"></i> اسم المشترك</label>
+                    <input type="text" id="subscriberName" class="form-control" placeholder="أدخل الاسم الكامل">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hoursPerWeek"><i class="fas fa-clock"></i> عدد الساعات في الأسبوع</label>
+                        <input type="number" id="hoursPerWeek" class="form-control" min="1" value="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="takenHours"><i class="fas fa-hourglass-half"></i> المأخوذ من الساعات</label>
+                        <input type="number" id="takenHours" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paidAmount"><i class="fas fa-money-bill-wave"></i> المدفوع من الرسوم</label>
+                        <input type="number" id="paidAmount" class="form-control" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="remainingAmount"><i class="fas fa-money-bill-alt"></i> المتبقي من الرسوم</label>
+                        <input type="number" id="remainingAmount" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning close-modal"><i class="fas fa-times"></i> إلغاء</button>
+                <button class="btn btn-primary" id="saveSubscriber"><i class="fas fa-save"></i> حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة مشتري -->
+    <div class="modal" id="buyerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-user-tag"></i> إضافة مشتري جديد</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="buyerName"><i class="fas fa-user"></i> اسم المشتري</label>
+                    <input type="text" id="buyerName" class="form-control" placeholder="أدخل الاسم الكامل">
+                </div>
+                
+                <div class="form-group">
+                    <label for="hoursCount"><i class="fas fa-clock"></i> عدد الساعات</label>
+                    <input type="number" id="hoursCount" class="form-control" min="1" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryDate"><i class="fas fa-calendar-day"></i> تاريخ الاستلام</label>
+                    <input type="datetime-local" id="deliveryDate" class="form-control">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="buyerPaid"><i class="fas fa-money-bill-wave"></i> المدفوع من الرسوم</label>
+                        <input type="number" id="buyerPaid" class="form-control" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="buyerRemaining"><i class="fas fa-money-bill-alt"></i> المتبقي من الرسوم</label>
+                        <input type="number" id="buyerRemaining" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning close-modal"><i class="fas fa-times"></i> إلغاء</button>
+                <button class="btn btn-primary" id="saveBuyer"><i class="fas fa-save"></i> حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة مشتروات -->
+    <div class="modal" id="purchaseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-cart-plus"></i> إضافة مشتروات جديدة</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="itemName"><i class="fas fa-box"></i> اسم الصنف</label>
+                    <input type="text" id="itemName" class="form-control" placeholder="أدخل اسم الصنف">
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemType"><i class="fas fa-tag"></i> نوع الصنف</label>
+                    <select id="itemType" class="form-control">
+                        <option value="مواد">مواد</option>
+                        <option value="صيانة">صيانة</option>
+                        <option value="أدوات">أدوات</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="purchaseDate"><i class="fas fa-calendar"></i> تاريخ الشراء</label>
+                    <input type="date" id="purchaseDate" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="purchaseAmount"><i class="fas fa-money-bill"></i> المبلغ</label>
+                    <input type="number" id="purchaseAmount" class="form-control" min="0" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="currentBalance"><i class="fas fa-wallet"></i> الرصيد الحالي</label>
+                    <input type="text" id="currentBalance" class="form-control" value="27,500 ر.س" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning close-modal"><i class="fas fa-times"></i> إلغاء</button>
+                <button class="btn btn-primary" id="savePurchase"><i class="fas fa-save"></i> حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // إدارة التنقل بين الأقسام
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // إزالة النشاط من جميع الروابط
+                document.querySelectorAll('.nav-links a').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // إضافة النشاط للرابط الحالي
+                this.classList.add('active');
+                
+                // إخفاء جميع الأقسام
+                document.querySelectorAll('.section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // إظهار القسم المطلوب
+                const sectionId = this.getAttribute('data-section');
+                document.getElementById(sectionId).style.display = 'block';
+            });
+        });
+        
+        // إدارة النماذج المنبثقة
+        const subscriberModal = document.getElementById('subscriberModal');
+        const buyerModal = document.getElementById('buyerModal');
+        const purchaseModal = document.getElementById('purchaseModal');
+        
+        const addSubscriberBtn = document.getElementById('addSubscriberBtn');
+        const addBuyerBtn = document.getElementById('addBuyerBtn');
+        const addPurchaseBtn = document.getElementById('addPurchaseBtn');
+        
+        const closeModalBtns = document.querySelectorAll('.close-modal');
+        
+        addSubscriberBtn.addEventListener('click', () => {
+            subscriberModal.style.display = 'flex';
+        });
+        
+        addBuyerBtn.addEventListener('click', () => {
+            buyerModal.style.display = 'flex';
+        });
+        
+        addPurchaseBtn.addEventListener('click', () => {
+            purchaseModal.style.display = 'flex';
+        });
+        
+        closeModalBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                subscriberModal.style.display = 'none';
+                buyerModal.style.display = 'none';
+                purchaseModal.style.display = 'none';
+            });
+        });
+        
+        // إغلاق النافذة المنبثقة عند النقر خارجها
+        window.addEventListener('click', (e) => {
+            if (e.target === subscriberModal) {
+                subscriberModal.style.display = 'none';
+            }
+            if (e.target === buyerModal) {
+                buyerModal.style.display = 'none';
+            }
+            if (e.target === purchaseModal) {
+                purchaseModal.style.display = 'none';
+            }
+        });
+        
+        // حفظ المشترك
+        document.getElementById('saveSubscriber').addEventListener('click', () => {
+            subscriberModal.style.display = 'none';
+            
+            // عرض رسالة النجاح
+            const successAlert = document.getElementById('success-alert');
+            successAlert.innerHTML = '<i class="fas fa-check-circle"></i> تم إضافة المشترك بنجاح!';
+            successAlert.style.display = 'block';
+            
+            // إخفاء الرسالة بعد 3 ثواني
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 3000);
+        });
+        
+        // حفظ المشتري
+        document.getElementById('saveBuyer').addEventListener('click', () => {
+            buyerModal.style.display = 'none';
+            
+            // عرض رسالة النجاح
+            const successAlert = document.getElementById('success-alert');
+            successAlert.innerHTML = '<i class="fas fa-check-circle"></i> تم إضافة المشتري بنجاح!';
+            successAlert.style.display = 'block';
+            
+            // إخفاء الرسالة بعد 3 ثواني
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 3000);
+        });
+        
+        // حفظ المشتروات
+        document.getElementById('savePurchase').addEventListener('click', () => {
+            purchaseModal.style.display = 'none';
+            
+            // عرض رسالة النجاح
+            const successAlert = document.getElementById('success-alert');
+            successAlert.innerHTML = '<i class="fas fa-check-circle"></i> تم إضافة المشتروات بنجاح!';
+            successAlert.style.display = 'block';
+            
+            // إخفاء الرسالة بعد 3 ثواني
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 3000);
+        });
+        
+        // المخططات البيانية
+        window.onload = function() {
+            // مخطط المشتركين
+            const subscribersCtx = document.getElementById('subscribersChart').getContext('2d');
+            const subscribersChart = new Chart(subscribersCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو'],
+                    datasets: [{
+                        label: 'عدد المشتركين',
+                        data: [35, 38, 40, 42, 41, 42, 45],
+                        backgroundColor: 'rgba(44, 120, 115, 0.7)',
+                        borderColor: 'rgba(44, 120, 115, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // مخطط الديون
+            const debtsCtx = document.getElementById('debtsChart').getContext('2d');
+            const debtsChart = new Chart(debtsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['المشتركين', 'المشترين'],
+                    datasets: [{
+                        data: [5200, 3000],
+                        backgroundColor: [
+                            'rgba(220, 53, 69, 0.7)',
+                            'rgba(255, 179, 0, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(220, 53, 69, 1)',
+                            'rgba(255, 179, 0, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        };
+        
+        // هنا سيتم إضافة كود قاعدة البيانات المحلية باستخدام IndexedDB
+        // (تم حذفه للإيجاز في هذا العرض، ولكن سيتم تنفيذه في التطبيق النهائي)
+        
+        // تعيين التاريخ الحالي في نماذج الشراء
+        document.getElementById('purchaseDate').valueAsDate = new Date();
+        
+        // إضافة ديناميكية لتواريخ الاستلام
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(10, 0, 0, 0);
+        
+        document.getElementById('deliveryDate').value = tomorrow.toISOString().slice(0, 16);
+    </script>
+</body>
+</html>
